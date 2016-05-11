@@ -5,6 +5,7 @@ import smbus
 import math
 import numpy as np
 from time import sleep
+import time
 
 
 #
@@ -90,6 +91,40 @@ class MPU9250():
         y = 1200.0 * yout / 4096.0
         z = 1200.0 * zout / 4096.0
         return [x, y, z]
+
+    def calcRoll(self, accel):
+        x = accel[0]
+        y = accel[1]
+        z = accel[2]
+        phi = math.atan(x / z)
+        return phi
+
+    def calcPitch(self, accel):
+        x = accel[0]
+        y = accel[1]
+        z = accel[2]
+        theta = math.atan(-y / math.sqrt(x * x + z * z))
+        return theta
+
+    def calcYaw(self, magnet, roll, pitch):
+        magX = magnet[0]
+        magY = magnet[1]
+        magZ = magnet[2]
+        rowX = magY
+        rowY = magX
+        rowZ = -magZ
+        row = np.matrix([[rowX], [rowY], [rowZ]])
+        A = np.matrix([\
+            [math.cos(pitch), math.sin(roll) * math.sin(pitch), math.cos(roll) * math.sin(pitch)]\
+            , [0, math.cos(roll), -math.sin(pitch)]\
+            , [-math.sin(pitch), math.sin(roll) * math.cos(pitch), math.cos(roll) * math.cos(pitch)]\
+            ])
+        calib = A * row
+        calibX = row[0]
+        calibY = row[1]
+        calibZ = row[2]
+        yaw = math.atan(-calibY / calibX)
+        return yaw
 
     def accel2RP(self, accel):
         x = accel[0]
@@ -183,8 +218,10 @@ def main():
     mpu.write(MPU9250_ADDRESS, 0x37, 0x02)
 
     # calibration Accel(xoff, xgain, yoff, ygain, zoff, zgain)
-    cab_accel = mpu.calibAccel()
-    print cab_accel
+    #cab_accel = mpu.calibAccel()
+    #print cab_accel
+    
+    startTime = time.time()
 
     while True:
         # get data
@@ -202,8 +239,18 @@ def main():
 
         #print rp
 
-        print accel, gyro, temp, magnet
-
+        #print accel   ,
+        #print gyro    ,
+        #print temp    ,
+        #print magnet
+        
+        roll = mpu.calcRoll(accel)
+        pitch = mpu.calcPitch(accel)
+        yaw = mpu.calcYaw(magnet, roll, pitch)
+        
+        nowTime = time.time() - startTime
+        
+        print nowTime,roll,pitch,yaw
 
         sleep(0.15)
 
