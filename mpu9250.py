@@ -244,14 +244,14 @@ def main():
         #print temp    ,
         #print magnet
         
-        #roll = mpu.calcRoll(accel)
-        #pitch = mpu.calcPitch(accel)
-        #yaw = mpu.calcYaw(magnet, roll, pitch)
+        roll = mpu.calcRoll(accel)
+        pitch = mpu.calcPitch(accel)
+        yaw = mpu.calcYaw(magnet, roll, pitch)
         
         nowTime = time.time() - startTime
         
-        #print nowTime,roll,pitch,yaw
-        print nowTime, accel[0], accel[1], accel[2]
+        print nowTime,roll,pitch,yaw
+        #print nowTime, accel[0], accel[1], accel[2]
 
 
         sleep(0.15)
