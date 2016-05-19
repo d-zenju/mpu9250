@@ -124,8 +124,8 @@ class RollPitchYaw():
         magX = magnet[0]
         magY = magnet[1]
         magZ = magnet[2]
-        rowX = magY
-        rowY = magX
+        rowX = magX
+        rowY = magY
         rowZ = -magZ
         row = np.matrix([[rowX], [rowY], [rowZ]])
         A = np.matrix([\
@@ -137,7 +137,13 @@ class RollPitchYaw():
         calibX = row[0]
         calibY = row[1]
         calibZ = row[2]
-        yaw = math.atan(-calibY / calibX)
+        try:
+            yaw = math.atan(-calibY / calibX)
+        except:
+            if calibY > 0:
+                yaw = 1.0
+            else:
+                yaw = -1.0
         return yaw
 
 
@@ -163,7 +169,8 @@ def main():
         
         nowTime = time.time() - startTime
         
-        print nowTime, math.degrees(yaw), accel[0], accel[1], accel[2]
+        print nowTime,math.degrees(roll),math.degrees(pitch),math.degrees(yaw)
+        #print nowTime, math.degrees(yaw), accel[0], accel[1], accel[2]
         #print nowTime,math.degrees(roll),math.degrees(pitch),math.degrees(yaw)
         #print nowTime, accel[0], accel[1], accel[2]
 
