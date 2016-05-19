@@ -93,19 +93,31 @@ class MPU9250():
         return [x, y, z]
 
 
-class RYP():
+class RollPitchYaw():
     def calcRoll(self, accel):
         x = accel[0]
         y = accel[1]
         z = accel[2]
-        phi = math.atan(x / z)
+        try:
+            phi = math.atan(y / z)
+        except:
+            if y > 0:
+                phi = 1.0
+            else:
+                phi = -1.0
         return phi
 
     def calcPitch(self, accel):
         x = accel[0]
         y = accel[1]
         z = accel[2]
-        theta = math.atan(-y / math.sqrt(x * x + z * z))
+        try:
+            theta = math.atan(-x / math.sqrt(y * y + z * z))
+        except:
+            if x > 0:
+                theta = -1.0
+            else:
+                theta = 1.0
         return theta
 
     def calcYaw(self, magnet, roll, pitch):
@@ -117,9 +129,9 @@ class RYP():
         rowZ = -magZ
         row = np.matrix([[rowX], [rowY], [rowZ]])
         A = np.matrix([\
-            [math.cos(pitch), math.sin(roll) * math.sin(pitch), math.cos(roll) * math.sin(pitch)]\
-            , [0, math.cos(roll), -math.sin(pitch)]\
-            , [-math.sin(pitch), math.sin(roll) * math.cos(pitch), math.cos(roll) * math.cos(pitch)]\
+            [math.cos(roll), math.sin(roll) * math.sin(pitch), math.cos(pitch) * math.sin(roll)]\
+            , [0, math.cos(pitch), -math.sin(pitch)]\
+            , [-math.sin(roll), math.sin(pitch) * math.cos(roll), math.cos(roll) * math.cos(pitch)]\
             ])
         calib = A * row
         calibX = row[0]
@@ -134,7 +146,7 @@ def main():
     mpu.write(MPU9250_ADDRESS, 0x6B, 0x00)
     mpu.write(MPU9250_ADDRESS, 0x37, 0x02)
     
-    ryp = RYP()
+    rpy = RollPitchYaw()
 
     startTime = time.time()
     
@@ -145,13 +157,14 @@ def main():
         temp = mpu.readTemp()
         magnet = mpu.readMagnet()
                
-        roll = ryp.calcRoll(accel)
-        pitch = ryp.calcPitch(accel)
-        yaw = ryp.calcYaw(magnet, roll, pitch)
+        roll = rpy.calcRoll(accel)
+        pitch = rpy.calcPitch(accel)
+        yaw = rpy.calcYaw(magnet, roll, pitch)
         
         nowTime = time.time() - startTime
         
-        print nowTime,math.degrees(roll),math.degrees(pitch),math.degrees(yaw)
+        print nowTime, math.degrees(yaw), accel[0], accel[1], accel[2]
+        #print nowTime,math.degrees(roll),math.degrees(pitch),math.degrees(yaw)
         #print nowTime, accel[0], accel[1], accel[2]
 
         sleep(0.15)
