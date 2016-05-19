@@ -92,167 +92,87 @@ class MPU9250():
         z = 1200.0 * zout / 4096.0
         return [x, y, z]
 
+
+class RollPitchYaw():
     def calcRoll(self, accel):
         x = accel[0]
         y = accel[1]
         z = accel[2]
-        phi = math.atan(x / z)
+        try:
+            phi = math.atan(y / z)
+        except:
+            if y > 0:
+                phi = 1.0
+            else:
+                phi = -1.0
         return phi
 
     def calcPitch(self, accel):
         x = accel[0]
         y = accel[1]
         z = accel[2]
-        theta = math.atan(-y / math.sqrt(x * x + z * z))
+        try:
+            theta = math.atan(-x / math.sqrt(y * y + z * z))
+        except:
+            if x > 0:
+                theta = -1.0
+            else:
+                theta = 1.0
         return theta
 
     def calcYaw(self, magnet, roll, pitch):
         magX = magnet[0]
         magY = magnet[1]
         magZ = magnet[2]
-        rowX = magY
-        rowY = magX
+        rowX = magX
+        rowY = magY
         rowZ = -magZ
         row = np.matrix([[rowX], [rowY], [rowZ]])
         A = np.matrix([\
-            [math.cos(pitch), math.sin(roll) * math.sin(pitch), math.cos(roll) * math.sin(pitch)]\
-            , [0, math.cos(roll), -math.sin(pitch)]\
-            , [-math.sin(pitch), math.sin(roll) * math.cos(pitch), math.cos(roll) * math.cos(pitch)]\
+            [math.cos(roll), math.sin(roll) * math.sin(pitch), math.cos(pitch) * math.sin(roll)]\
+            , [0, math.cos(pitch), -math.sin(pitch)]\
+            , [-math.sin(roll), math.sin(pitch) * math.cos(roll), math.cos(roll) * math.cos(pitch)]\
             ])
         calib = A * row
         calibX = row[0]
         calibY = row[1]
         calibZ = row[2]
-        yaw = math.atan(-calibY / calibX)
+        try:
+            yaw = math.atan(-calibY / calibX)
+        except:
+            if calibY > 0:
+                yaw = 1.0
+            else:
+                yaw = -1.0
         return yaw
-
-    def accel2RP(self, accel):
-        x = accel[0]
-        y = accel[1]
-        z = accel[2]
-        
-        #theta = math.degrees(math.atan(x / math.sqrt(y * y + z * z)))
-        #psi = math.degrees(math.atan(y / math.sqrt(x * x + z * z)))
-        #phi = math.degrees(math.atan(math.sqrt(x * x + y * y) / z))
-        #r = math.degrees(math.asin(x))
-        #p = math.degrees(math.asin(y / math.sqrt(1 - (x * x))))
-        
-        phi = math.degrees(math.asin(x / z))
-        theta = math.degrees(math.asin(y / z))
-        
-        return [phi, theta]
-        #return [r, p]
-
-    def magnet2Azimuth(self, magnet):
-        x = magnet[0]
-        y = magnet[1]
-        z = magnet[2]
-
-        l = math.sqrt(x * x + y * y + z * z)
-        phi = math.atan(z / l)
-        theta = math.degrees(math.atan(x / (l * math.cos(phi))))
-
-        return theta
-
-    def calibAccel(self):
-        print 'Accel Calibration'
-        flag = 0
-        xyz = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-        while True:
-            accel = self.readAccel()
-            if flag is 0:
-                print '+X Accel:'
-                print accel[0]
-            if flag is 1:
-                print '-X Accel:'
-                print accel[0]
-            if flag is 2:
-                print '+Y Accel:'
-                print accel[1]
-            if flag is 3:
-                print '-Y Accel:'
-                print accel[1]
-            if flag is 4:
-                print '+Z Accel:'
-                print accel[2]
-            if flag is 5:
-                print '-Z Accel:'
-                print accel[2]
-
-            print 'OK: y, Bad: any'
-            str = raw_input()
-            if str is 'y':
-                if (flag is 0) or (flag is 1):
-                    xyz[flag] = accel[0]
-                if (flag is 2) or (flag is 3):
-                    xyz[flag] = accel[1]
-                if (flag is 4) or (flag is 5):
-                    xyz[flag] = accel[2]
-                flag = flag + 1
-                if flag is 6:
-                    break
-        
-        x_off = 0.5 * (xyz[0] + xyz[1])
-        y_off = 0.5 * (xyz[2] + xyz[3])
-        z_off = 0.5 * (xyz[4] + xyz[5])
-        x_gain = 0.5 * (xyz[0] - xyz[1])
-        y_gain = 0.5 * (xyz[2] - xyz[3])
-        z_gain = 0.5 * (xyz[4] - xyz[5])
-
-        return [x_off, x_gain, y_off, y_gain, z_off, z_gain]
-
-    def revAccel(self, accel, cab):
-        x = (accel[0] - cab[0]) / cab[1]
-        y = (accel[1] - cab[2]) / cab[3]
-        z = (accel[2] - cab[4]) / cab[5]
-        return [x, y, z]
-
-    def revMagnet(self, magnet, pyr):
-        return        
 
 
 def main():
     mpu = MPU9250()
     mpu.write(MPU9250_ADDRESS, 0x6B, 0x00)
     mpu.write(MPU9250_ADDRESS, 0x37, 0x02)
-
-    # calibration Accel(xoff, xgain, yoff, ygain, zoff, zgain)
-    #cab_accel = mpu.calibAccel()
-    #print cab_accel
     
-    startTime = time.time()
+    rpy = RollPitchYaw()
 
+    startTime = time.time()
+    
     while True:
         # get data
         accel = mpu.readAccel()
         gyro = mpu.readGyro()
         temp = mpu.readTemp()
         magnet = mpu.readMagnet()
-        
-        # revision data
-        #t_accel = mpu.revAccel(accel, cab_accel)
-        #print t_accel
-
-        #rp = mpu.accel2RP(t_accel)
-        #azi = mpu.magnet2Azimuth(magnet)
-
-        #print rp
-
-        #print accel   ,
-        #print gyro    ,
-        #print temp    ,
-        #print magnet
-        
-        roll = mpu.calcRoll(accel)
-        pitch = mpu.calcPitch(accel)
-        yaw = mpu.calcYaw(magnet, roll, pitch)
+               
+        roll = rpy.calcRoll(accel)
+        pitch = rpy.calcPitch(accel)
+        yaw = rpy.calcYaw(magnet, roll, pitch)
         
         nowTime = time.time() - startTime
         
-        print nowTime,roll,pitch,yaw
+        print nowTime,math.degrees(roll),math.degrees(pitch),math.degrees(yaw)
+        #print nowTime, math.degrees(yaw), accel[0], accel[1], accel[2]
+        #print nowTime,math.degrees(roll),math.degrees(pitch),math.degrees(yaw)
         #print nowTime, accel[0], accel[1], accel[2]
-
 
         sleep(0.15)
 

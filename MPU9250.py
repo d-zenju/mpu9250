@@ -4,36 +4,37 @@
 import smbus
 from time import sleep
 
+#
+# define
+#
+# slave address
+MPU9250_ADDRESS = 0x68
+AK8963_ADDRESS = 0x0C
+# register address(MPU9250)
+ACCEL_XOUT_H = 0x3B
+ACCEL_XOUT_L = 0x3C
+ACCEL_YOUT_H = 0x3D
+ACCEL_YOUT_L = 0x3E
+ACCEL_ZOUT_H = 0x3F
+ACCEL_ZOUT_L = 0x40
+TEMP_OUT_H = 0x41
+TEMP_OUT_L = 0x42
+GYRO_XOUT_H = 0x43
+GYRO_XOUT_L = 0x44
+GYRO_YOUT_H = 0x45
+GYRO_YOUT_L = 0x46
+GYRO_ZOUT_H = 0x47
+GYRO_ZOUT_L = 0x48
+# register address(AK8963)
+MAGNET_XOUT_L = 0x03
+MAGNET_XOUT_H = 0x04
+MAGNET_YOUT_L = 0x05
+MAGNET_YOUT_H = 0x06
+MAGNET_ZOUT_L = 0x07
+MAGNET_ZOUT_H = 0x08
+
+
 class MPU9250():
-Å@Å@#
-    # define
-    #
-    # slave address
-    MPU9250_ADDRESS = 0x68
-    AK8963_ADDRESS = 0x0C
-    # register address(MPU9250)
-    ACCEL_XOUT_H = 0x3B
-    ACCEL_XOUT_L = 0x3C
-    ACCEL_YOUT_H = 0x3D
-    ACCEL_YOUT_L = 0x3E
-    ACCEL_ZOUT_H = 0x3F
-    ACCEL_ZOUT_L = 0x40
-    TEMP_OUT_H = 0x41
-    TEMP_OUT_L = 0x42
-    GYRO_XOUT_H = 0x43
-    GYRO_XOUT_L = 0x44
-    GYRO_YOUT_H = 0x45
-    GYRO_YOUT_L = 0x46
-    GYRO_ZOUT_H = 0x47
-    GYRO_ZOUT_L = 0x48
-    # register address(AK8963)
-    MAGNET_XOUT_L = 0x03
-    MAGNET_XOUT_H = 0x04
-    MAGNET_YOUT_L = 0x05
-    MAGNET_YOUT_H = 0x06
-    MAGNET_ZOUT_L = 0x07
-    MAGNET_ZOUT_H = 0x08
-    
     def __init__(self):
         self.bus = smbus.SMBus(1)
     
@@ -90,3 +91,4 @@ class MPU9250():
         y = 1200.0 * yout / 4096.0
         z = 1200.0 * zout / 4096.0
         return [x, y, z]
+
