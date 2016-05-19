@@ -36,7 +36,7 @@ class RollPitchYaw():
         magY = magnet[1]
         magZ = magnet[2]
         rowX = magX
-        rowY = magY
+        rowY = -magY
         rowZ = -magZ
         row = np.matrix([[rowX], [rowY], [rowZ]])
         A = np.matrix([\
@@ -49,7 +49,7 @@ class RollPitchYaw():
         calibY = row[1]
         calibZ = row[2]
         try:
-            yaw = math.atan(-calibY / calibX)
+            yaw = math.atan(calibY / calibX)
         except:
             if calibY > 0:
                 yaw = 1.0
